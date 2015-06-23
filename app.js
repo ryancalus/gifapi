@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 var express = require('express');
+var basicAuth = require('basic-auth');
 var cookieParser = require('cookie-parser');
 var compress = require('compression');
 var favicon = require('serve-favicon');
@@ -12,9 +13,9 @@ var errorHandler = require('errorhandler');
 var _ = require('lodash');
 var MongoStore = require('connect-mongo')(session);
 var flash = require('express-flash');
-var path = require('path');
 var mongoose = require('mongoose');
 var expressValidator = require('express-validator');
+var User = require('./models/User');
 
 /**
  * Controllers (route handlers).
@@ -26,6 +27,7 @@ var apiController = require('./controllers/api');
  * Create Express server.
  */
 var app = express();
+
 
 /**
  * Connect to MongoDB.
@@ -44,17 +46,33 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(expressValidator());
 app.use(cookieParser());
-app.use(flash());
-app.use(function(req, res, next) {
-  res.locals.user = req.user;
-  next();
-});
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
+
+
+/**
+* Configure auth
+*/
+var auth = function (req, res, next) {
+  function unauthorized(res) {
+    res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+    return res.sendStatus(401);
+  };
+
+  var user = basicAuth(req);
+
+  if (!user || !user.name || !user.pass) {
+    return unauthorized(res);
+  };
+  User.findOne({ username: user.name, password: user.pass}, function(err, existingUser){
+    if (existingUser) return next();
+    return unauthorized(res);
+  });
+};
+
 
 /**
  * API examples routes.
  */
-app.get('/api/:q', apiController.searchGiphy);
+app.get('/api/:q', auth, apiController.searchGiphy);
 
 app.post('/api', apiController.postUser);
 
