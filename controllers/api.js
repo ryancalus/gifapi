@@ -24,7 +24,7 @@ exports.searchGiphy = function(req, res) {
 
 
 exports.postUser = function(req, res) {
-    req.assert('username', 'Username cannot be blank').notEmpty();
+    req.assert('user', 'Username cannot be blank').notEmpty();
     req.assert('password', 'Password cannot be blank').notEmpty();
 
     var errors = req.validationErrors();
@@ -38,11 +38,11 @@ exports.postUser = function(req, res) {
     }  
 
     var user = new User({
-      username: req.body.username,
+      username: req.body.user,
       password: req.body.password
     });
 
-    User.findOne({ username: req.body.username }, function(err, existingUser) {
+    User.findOne({ username: req.body.user }, function(err, existingUser) {
       if (existingUser) {
         res.status(400).send({message: 'User exists'});
       }
