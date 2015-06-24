@@ -73,6 +73,7 @@ var auth = function (req, res, next) {
  * API examples routes.
  */
 app.get('/api/:q', auth, apiController.searchGiphy);
+app.get('/api?:q', auth, apiController.searchGiphy);
 
 app.post('/api', apiController.postUser);
 
